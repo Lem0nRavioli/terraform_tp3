@@ -1,0 +1,82 @@
+---
+- name: Install and Configure Nginx
+  hosts: http
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install nginx
+      package:
+        name: nginx
+        state: present
+      
+    - name: Update default Nginx configuration
+      copy:
+        src: ./default.conf
+        dest: /etc/nginx/conf.d/default.conf
+        owner: root
+        group: root
+        mode: '0644'
+    
+    - name: Add a placeholder HTML page
+      copy:
+        src: ./index.html
+        dest: /usr/share/nginx/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Start nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+- name: Setup AI API and MLflow
+  hosts: script
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker.io
+        state: present
+
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+
+    - name: Create project directory
+      file:
+        path: /opt/mlflow-ai
+        state: directory
+        owner: root
+        group: root
+
+    - name: Upload Docker Compose file
+      copy:
+        src: ./docker-compose.yml
+        dest: /opt/mlflow-ai/docker-compose.yml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Upload AI API files
+      copy:
+        src: ./ai-api/
+        dest: /opt/mlflow-ai/ai-api/
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Start Docker Compose services
+      command: docker-compose -f /opt/mlflow-ai/docker-compose.yml up -d

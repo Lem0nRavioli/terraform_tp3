@@ -1,0 +1,11 @@
+terraform plan => dry run (check if possible)
+terraform init => genre git init
+terraform apply (--auto-approve) => do shit
+terraform destroy => deprovision everything
+
+ansible-playbook -i inventory.ini playbook.yml
+
+ssh -i myKey.pem ubuntu@<ip>
+
+mots clés .tf
+ouput => affiche valeurs post building

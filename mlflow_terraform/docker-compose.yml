@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  ai-api:
+    build:
+      context: ./ai-api
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+
+  mlflow:
+    image: mlflow:latest
+    ports:
+      - "5001:5000"
+    environment:
+      - BACKEND_STORE_URI=sqlite:///mlflow.db
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - ./mlflow-data:/mlflow
