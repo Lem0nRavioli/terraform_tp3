@@ -24,8 +24,65 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-resource "aws_security_group" "monitoring_sg" {
-  name        = "monitoring-sg"
+##### SECURITY GROUPS #####
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_ssh"
+  description = "Allow SSH inbound traffic"
+
+  ingress {
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "allow_ssh"
+  }
+}
+
+resource "aws_security_group" "allow_http_s" {
+  name        = "allow_http_s"
+  description = "Allow HTTP/S inbound traffic"
+
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS from anywhere"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "allow_http_s"
+  }
+}
+
+resource "aws_security_group" "monitoring" {
+  name        = "monitoring"
   description = "Allow HTTP access for Prometheus and Grafana"
 
   ingress {
@@ -49,21 +106,24 @@ resource "aws_security_group" "monitoring_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+##### SECURITY GROUPS END #####
 
+##### EC2 INSTANCE PROVISION #####
 resource "aws_instance" "monitoring" {
   ami           = data.aws_ami.ubuntu.id
   key_name      = "myKey"
   instance_type = "t2.micro"
 
-  security_groups = [aws_security_group.monitoring_sg.name]
+  security_groups = [aws_security_group.monitoring.name, aws_security_group.allow_ssh.name, aws_security_group.allow_http_s.name]
 
   tags = {
     Name = "Prometheus-Grafana"
   }
 
 }
+##### EC2 INSTANCE PROVISION END #####
 
-# Output the public IP of the EC2 instance
+##### OUTPUT SECTION #####
 output "instance_public_ip_monitoring" {
   value = aws_instance.monitoring.public_ip
 }
@@ -76,3 +136,4 @@ output "instance_private_ip_monitoring" {
 output "ami_id" {
   value = data.aws_ami.ubuntu.id
 }
+##### OUTPUT SECTION END #####
