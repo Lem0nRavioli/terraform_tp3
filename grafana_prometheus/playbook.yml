@@ -1,0 +1,67 @@
+# ansible/playbook.yml
+---
+- name: Install and configure Prometheus and Grafana
+  hosts: monitoring
+  become: yes
+  tasks:
+    # Update package repository
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # Install Docker
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    # Pull Prometheus Docker image
+    - name: Pull Prometheus Docker image
+      command: docker pull prom/prometheus
+
+    # Pull Grafana Docker image
+    - name: Pull Grafana Docker image
+      command: docker pull grafana/grafana
+
+    # Create Prometheus configuration file
+    - name: Create Prometheus configuration directory
+      file:
+        path: /home/ubuntu/prometheus
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Create Prometheus configuration file
+      copy:
+        dest: /home/ubuntu/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+          scrape_configs:
+            - job_name: "prometheus"
+              static_configs:
+                - targets: ["localhost:9090"]
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    # Run Prometheus container
+    - name: Start Prometheus container
+      command: >
+        docker run -d --name prometheus
+        -p 9090:9090
+        -v /home/ubuntu/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        prom/prometheus
+
+    # Run Grafana container
+    - name: Start Grafana container
+      command: >
+        docker run -d --name grafana
+        -p 3000:3000
+        grafana/grafana
