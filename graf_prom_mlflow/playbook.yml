@@ -9,74 +9,63 @@
       apt:
         update_cache: yes
 
-    # # Install Docker
-    # - name: Install Docker
-    #   apt:
-    #     name: docker.io
-    #     state: present
+    # Install Docker
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
 
-    # - name: Enable and start Docker service
-    #   systemd:
-    #     name: docker
-    #     enabled: yes
-    #     state: started
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
 
-    # # Pull MLflow Docker image
-    # - name: Pull MLflow Docker image
-    #   command: docker pull ghcr.io/mlflow/mlflow
+    # Pull Prometheus Docker image
+    - name: Pull Prometheus Docker image
+      command: docker pull prom/prometheus
 
-    # # Pull Prometheus Docker image
-    # - name: Pull Prometheus Docker image
-    #   command: docker pull prom/prometheus
+    # Pull Grafana Docker image
+    - name: Pull Grafana Docker image
+      command: docker pull grafana/grafana
 
-    # # Pull Grafana Docker image
-    # - name: Pull Grafana Docker image
-    #   command: docker pull grafana/grafana
+    # Create Prometheus configuration file
+    - name: Create Prometheus configuration directory
+      file:
+        path: /home/ubuntu/prometheus
+        state: directory
+        owner: ubuntu
+        group: ubuntu
 
-    # # Create Prometheus configuration file
-    # - name: Create Prometheus configuration directory
-    #   file:
-    #     path: /home/ubuntu/prometheus
-    #     state: directory
-    #     owner: ubuntu
-    #     group: ubuntu
+    - name: Create Prometheus configuration file
+      copy:
+        dest: /home/ubuntu/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+          scrape_configs:
+            - job_name: "prometheus"
+              static_configs:
+                - targets: ["localhost:9090"]
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
 
-    # - name: Create Prometheus configuration file
-    #   copy:
-    #     dest: /home/ubuntu/prometheus/prometheus.yml
-    #     content: |
-    #       global:
-    #         scrape_interval: 15s
-    #       scrape_configs:
-    #         - job_name: "prometheus"
-    #           static_configs:
-    #             - targets: ["localhost:9090"]
-    #     owner: ubuntu
-    #     group: ubuntu
-    #     mode: '0644'
+    # Run Prometheus container
+    - name: Start Prometheus container
+      command: >
+        docker run -d --name prometheus
+        -p 9090:9090
+        -v /home/ubuntu/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        prom/prometheus
 
-    # # Run Prometheus container
-    # - name: Start Prometheus container
-    #   command: >
-    #     docker run -d --name prometheus
-    #     -p 9090:9090
-    #     -v /home/ubuntu/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    #     prom/prometheus
+    # Run Grafana container
+    - name: Start Grafana container
+      command: >
+        docker run -d --name grafana
+        -p 3000:3000
+        grafana/grafana
 
-    # # Run Grafana container
-    # - name: Start Grafana container
-    #   command: >
-    #     docker run -d --name grafana
-    #     -p 3000:3000
-    #     grafana/grafana
-    
-    # # Run MLflow container
-    # - name: Start MLflow container
-    #   command: >
-    #     docker run -d --name mlflow
-    #     -p 5000:5000
-    #     ghcr.io/mlflow/mlflow
-    
     # Install Python and pip
     - name: Install Python3 and pip & venv
       apt:
@@ -85,7 +74,7 @@
           - python3-pip
           - python3.12-venv
         state: present
-    
+
     # Install Git
     - name: Install Git
       apt:
@@ -95,53 +84,59 @@
     # Clone Git repository
     - name: Clone MLflow repository
       git:
-        repo: "https://github.com/Lem0nRavioli/mflow_test_api.git"
+        repo: "https://github.com/valentinpuillandre/mlflfow_2.git"
         dest: /home/ubuntu/mlflow
-        version: main
+        version: master
         update: yes # if repo exists, update it
       # args:
       #   chdir: /home/ubuntu/mlflow
 
-    
-    # - name: Install additional Python dependencies
-    #   pip:
-    #     requirements: /home/ubuntu/mlflow/requirements.txt
-    #   become_user: ubuntu
-    #   ignore_errors: yes
-    
-    # - name: Install python3-venv package
-    #   apt:
-    #     name: python3.12-venv
-    #     state: present
-    #     update_cache: yes
+    - name: Install python3-venv package
+      apt:
+        name: python3.12-venv
+        state: present
+        update_cache: yes
 
-    - name: Create virtual environment and install requirements & run train.py
-      become_user: ubuntu
-      shell: |
-        python3 -m venv /home/ubuntu/mlflow_env
-        source /home/ubuntu/mlflow_env/bin/activate
-        pip install -r requirements.txt
-        python3 /home/ubuntu/mlflow/train.py
-      args:
-        creates: /home/ubuntu/mlflow_env
-    
-    # # Run the train.py script
-    # - name: Run the training script
-    #   command: python3 /home/ubuntu/mlflow/train.py
-    #   become_user: ubuntu
+        # Fix permissions for mlflow directory
+    - name: Ensure ownership of mlflow directory
+      file:
+        path: /home/ubuntu/mlflow
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
 
-    # - name: Run the training script
-    #   become_user: ubuntu
-    #   shell: |
-    #     source /home/ubuntu/mlflow_env/bin/activate
-    #     python3 /home/ubuntu/mlflow/train.py
-
-    # Find the latest MLflow run ID (basic example)
-    - name: Find the latest MLflow model run
-      command: find /home/ubuntu/mlflow/mlruns/0/ -maxdepth 1 -type d -printf "%T@ %p\n" | sort -n | tail -1 | awk '{print $2}'
-      register: latest_run
-
-    # Serve the MLflow model
-    - name: Serve the trained MLflow model
+    - name: Build Docker image from Dockerfile
       command: >
-        mlflow models serve -m {{ latest_run.stdout }}/artifacts/model/ -p 8888 --no-conda
+        docker build . -t mlflow-boston-housing
+      args:
+        chdir: /home/ubuntu/mlflow
+
+
+    - name: Run MLflow Boston Housing container
+      command: >
+        docker run -d -p 5000:5000 mlflow-boston-housing
+
+
+    #     # Find the latest MLflow model artifacts
+    # - name: Find the latest MLflow model artifacts
+    #   shell: |
+    #     find /home/ubuntu/mlflow/mlruns/0/ -type d -name "model" | sort | tail -1
+    #   register: latest_model_path
+
+    # - name: Debug latest_model_path.stdout
+    #   debug:
+    #     var: latest_model_path.stdout
+
+    # # Serve the MLflow model using the correct path
+    # - name: Serve the trained MLflow model
+    #   become_user: ubuntu
+    #   shell: >
+    #     /home/ubuntu/mlflow_env/bin/mlflow models serve
+    #     --model-uri {{ latest_model_path.stdout }}
+    #     --port 8888 --no-conda
+    #   args:
+    #     executable: /bin/bash
+
+
+

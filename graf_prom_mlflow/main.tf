@@ -137,8 +137,8 @@ resource "aws_security_group" "mlflow" {
 ##### EC2 INSTANCE PROVISION #####
 resource "aws_instance" "infra_devops" {
   ami           = data.aws_ami.ubuntu.id
-  key_name      = "myKey"
-  instance_type = "t2.micro"
+  key_name      = "myKey2"
+  instance_type = "t2.large"
 
   security_groups = [aws_security_group.monitoring.name, aws_security_group.allow_ssh.name, aws_security_group.allow_http_s.name, aws_security_group.mlflow.name]
 
