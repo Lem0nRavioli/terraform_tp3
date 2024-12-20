@@ -1,0 +1,47 @@
+Projet: MLOPS - Valentin Puillandre / Guillaume Saulnier
+
+Hello Samuel
+
+On a malheureusement pas eu le temps de finir.
+Ci-joint notre production actuelle:
+    - Déploiement mlflow (5000)
+    - Déploiement Prometheus (9090)
+    - Déploiement Grafana (3000)
+
+Les 3 sont joingnable via HTTP sur leurs ports respectifs.
+
+Action flow:
+
+    - Créer une clé ssh nommée myKey sur AWS et la télécharger au format .pem
+    - Ajouter la clé téléchargée au dossier
+    - >> chmod 600 myKey.pem
+    - >> terraform init
+    - >> terraform apply
+        yes
+    - mettre l'ip publique à la suite de "ansible_host=" sur la ligne 2 du fichier "inventory.ini"
+    - >> ansible-playbook -i inventory.ini playbook.yml
+    - (optionel) tester les 3 endpoints
+    - >> terraform destroy
+
+Ce qu'il manque & soucis rencontré:
+    
+    - Serve le modèle entrainé:
+        Problème de permission sur le dossier contenant le train.py
+        Problème pour trouver dynamiquement le dernier artifact run
+        Problème avec la commande du serve elle même qui crashait avec divers code erreur
+    
+    - Github action:
+        Pas assez de temps pour ne serais-ce que se poser sur le sujet.
+
+Les princpales causes de notre incapacité compléter ce projet:
+
+    - Manque de cruel temps alloué,
+    - Connaissances très légères sur le plus gros des technologies requises par le cahier des charges,
+    - Pas d'architecture pré-conçue permettant de se focaliser sur les technologies requises.
+
+Navré Samuel, on a fait de notre mieux. 
+C'était très frustrant pour nous de devoir bacler ce projet et de ne pas pouvoir le mener à terme.
+On a tout de même bien progressé sur le sujet, mais ça aurais été vraiment bien de faire ça en cours.
+
+Bonne fin d'année ! 
+Valentin & Guillaume
