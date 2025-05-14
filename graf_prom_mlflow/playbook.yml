@@ -1,21 +1,21 @@
 # ansible/playbook.yml
 ---
-- name: Install and configure Prometheus and Grafana
+- name: install and configure prom & grafana
   hosts: monitoring
   become: yes
   tasks:
     # update package repository
-    - name: Update apt cache
+    - name: update apt cache
       apt:
         update_cache: yes
 
     # install docker
-    - name: Install Docker
+    - name: install docker
       apt:
         name: docker.io
         state: present
 
-    - name: Enable and start Docker service
+    - name: enable & start docker services
       systemd:
         name: docker
         enabled: yes
