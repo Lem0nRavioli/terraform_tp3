@@ -4,12 +4,12 @@
   hosts: monitoring
   become: yes
   tasks:
-    # Update package repository
+    # update package repository
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    # Install Docker
+    # install docker
     - name: Install Docker
       apt:
         name: docker.io
@@ -21,23 +21,23 @@
         enabled: yes
         state: started
 
-    # Pull Prometheus Docker image
-    - name: Pull Prometheus Docker image
+    # pull prom docker image
+    - name: pull prom docker image
       command: docker pull prom/prometheus
 
-    # Pull Grafana Docker image
-    - name: Pull Grafana Docker image
+    # pull grafana docker image
+    - name: pull grafana docker image
       command: docker pull grafana/grafana
 
-    # Create Prometheus configuration file
-    - name: Create Prometheus configuration directory
+    # create prom configuration file
+    - name: create prom configuration directory
       file:
         path: /home/ubuntu/prometheus
         state: directory
         owner: ubuntu
         group: ubuntu
 
-    - name: Create Prometheus configuration file
+    - name: create prom configuration file
       copy:
         dest: /home/ubuntu/prometheus/prometheus.yml
         content: |
@@ -51,23 +51,23 @@
         group: ubuntu
         mode: '0644'
 
-    # Run Prometheus container
-    - name: Start Prometheus container
+    # run prom container
+    - name: run prom container
       command: >
         docker run -d --name prometheus
         -p 9090:9090
         -v /home/ubuntu/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
         prom/prometheus
 
-    # Run Grafana container
-    - name: Start Grafana container
+    # run grafana container
+    - name: run grafana container
       command: >
         docker run -d --name grafana
         -p 3000:3000
         grafana/grafana
 
-    # Install Python and pip
-    - name: Install Python3 and pip & venv
+    # install python and pip
+    - name: install python, pip & venv
       apt:
         name:
           - python3
@@ -75,14 +75,14 @@
           - python3.12-venv
         state: present
 
-    # Install Git
-    - name: Install Git
+    # install git
+    - name: install git
       apt:
         name: git
         state: present
 
-    # Clone Git repository
-    - name: Clone MLflow repository
+    # clone mlflow git repo
+    - name: clone mlflow git repo
       git:
         repo: "https://github.com/Lem0nRavioli/fashion_cnn_vs_dense_streamlit"
         dest: /home/ubuntu/mlflow
@@ -91,14 +91,8 @@
       # args:
       #   chdir: /home/ubuntu/mlflow
 
-    - name: Install python3-venv package
-      apt:
-        name: python3.12-venv
-        state: present
-        update_cache: yes
-
-        # Fix permissions for mlflow directory
-    - name: Ensure ownership of mlflow directory
+    # fix permissions for mlflow directory
+    - name: ensure ownership of mlflow directory
       file:
         path: /home/ubuntu/mlflow
         state: directory
@@ -106,14 +100,14 @@
         group: ubuntu
         mode: '0755'
 
-    - name: Build Docker image from Dockerfile
+    - name: build docker image from git repo Dockerfile
       command: >
         docker build . -t mlflow-boston-housing
       args:
         chdir: /home/ubuntu/mlflow
 
 
-    - name: Run MLflow Boston Housing container
+    - name: run mlflow docker container
       command: >
         docker run -d -p 5000:5000 mlflow-boston-housing
 
