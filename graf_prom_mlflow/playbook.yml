@@ -84,7 +84,7 @@
     # Clone Git repository
     - name: Clone MLflow repository
       git:
-        repo: "https://github.com/valentinpuillandre/mlflfow_2.git"
+        repo: "https://github.com/Lem0nRavioli/fashion_cnn_vs_dense_streamlit"
         dest: /home/ubuntu/mlflow
         version: master
         update: yes # if repo exists, update it
